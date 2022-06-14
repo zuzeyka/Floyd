@@ -12,12 +12,16 @@ public:
     ~Algorytm(); // деструктор
     void Print(bool arr); // функция вывода матрицы путей/значений, в зависимости от значения полученого аргумента
     void NodeIni(); // инициализация массивов хранящих все пути/значения
-    void Calculations(int start, int finish);
+    void Calculations();
     void SetConection(int FirstNode, int SecondNode, double value); // добавление связи между передаными узлами и расстояния между ними
+    void SaveFirstGraf(); // сохранение первых версий каждой из таблиц
+    void ShowFirstGraf(bool ways); // показ первой версии одной из таблиц
 private:
     double** DirectionValues; // массив, который хранит кратчайшее расстояние, которое потребуется для перемещения из одного узла в другой, где индексы соотвествуют номерам узлов  ля получения значения для конкретной пары
     string** AllWays; // массив, который хранит полный кратчайший путь между преодолеваемыемы узлами, где индексы соотвествуют номерам узлов для получения значения для конкретной пары
     int NodeCount; // общее количество узлов в графе
+    string FirstWays; // переменная для хранения первого полученого массива маршрутов
+    string FirstValues; // переменная для хранения первого полученого массива расстояний между каждым из узлов
 };
 
 Algorytm::Algorytm()
@@ -41,12 +45,13 @@ void Algorytm::Print(bool values)
 {
     for (auto i = 0; i < NodeCount; i++)
     {
+        cout << i + 1 << " ";
         for (auto j = 0;  j < NodeCount;  j++)
         {
             if (values)
-                cout << DirectionValues[i][j] << " ";
+                cout << DirectionValues[i][j] << " #" << j + 1 << "# ";
             else
-                cout << AllWays[i][j] << " # ";
+                cout << AllWays[i][j] << " #" << j + 1 << "# ";
         }
         cout << endl;
     }
@@ -73,7 +78,7 @@ void Algorytm::NodeIni()
     }
 }
 
-void Algorytm::Calculations(int start, int finish)
+void Algorytm::Calculations()
 {
     for (auto k = 0; k < NodeCount; k++)
     {
@@ -85,19 +90,13 @@ void Algorytm::Calculations(int start, int finish)
                 {
                     // в случае если новый найденый путь является короче чем предыдущий - элемент текущей итерации перезаписывается
                     DirectionValues[i][j] = DirectionValues[i][k] + DirectionValues[k][j];
-                    // если параметры в сумме дают значение большее общему количеству узлов то убавляем их сумму на 1
-                    // чтобы не было значение большее чем конечный узел
-                    if (j > NodeCount / 2 || k > NodeCount / 2)
-                        AllWays[i][j] = AllWays[i][k] + " -> " + to_string(k + j - 1);
-                    else
-                        AllWays[i][j] = AllWays[i][k] + " -> " + to_string(k + j);
+                    // конечный узел пути равен переменной j + 1 которая отвечает за первый выбраный узел в текущей итерации по координате х
+                    // + 1 так индексация массива начинается с 0 а узлы начинаются с 1
+                    AllWays[i][j] = AllWays[i][k] + " -> " + to_string(j + 1);
                 }
             }
         }
     }
-    system("cls");
-    cout << "The shortest way: " << AllWays[start - 1][finish - 1] << endl; // отображения кратчайшего пути в зависимости от заданого начального и конечного путей
-    cin >> start;
 }
 
 void Algorytm::SetConection(int FirstNode, int SecondNode, double value)
@@ -113,6 +112,28 @@ void Algorytm::SetConection(int FirstNode, int SecondNode, double value)
     }
     else // если номера полученных узлов выходит за диапазоп всех доступных узлов
         cout << endl << "Incorrect data!";
+}
+void Algorytm::SaveFirstGraf()
+{
+    for (auto i = 0; i < NodeCount; i++)
+    {
+        FirstValues += to_string(i + 1) + " ";
+        FirstWays += to_string(i + 1) + " ";
+        for (auto j = 0; j < NodeCount; j++)
+        {
+                FirstValues += to_string(DirectionValues[i][j]) + " #" + to_string(j + 1) + "# ";
+                FirstWays += AllWays[i][j] + " #" + to_string(j + 1) + "# ";
+        }
+        FirstValues += "\n";
+        FirstWays += "\n";
+    }
+}
+void Algorytm::ShowFirstGraf(bool ways)
+{
+    if (ways)
+        cout << "First version of minimal ways matrix for every node pairs:\n" << FirstWays << endl;
+    else
+        cout << "First version of minimal values matrix for every node pairs:\n" << FirstValues << endl;
 }
 class Menu
 {
@@ -166,39 +187,45 @@ void Menu::AddConection()
     int first_node, second_node;
     double value;
     system("cls");
-    bool answer;
     do
     {
-        cout << "Type number of the first node to conect:";
+        cout << "Type number of the first node to conect(Type 0 to exit):";
         cin >> first_node;
-        cout << endl << "Type number of the second node to connect with first:";
+        if (first_node == 0)
+            break;
+        cout << endl << "Type number of the second node to connect with first(Type 0 to exit):";
         cin >> second_node;
-        cout << endl << "Good. Last more step - type value between this two nodes:";
+        if (second_node == 0)
+            break;
+        cout << endl << "Good. Last more step - type value between this two nodes(Type 0 to exit):";
         cin >> value;
+        if (value == 0)
+            break;
         cout << endl << "Your connection succsecfully added";
         MainAlgorytm->SetConection(first_node, second_node, value);
-        cout << endl << "Type 0 to stop add, and 1 to continue:";
-        cin >> answer;
         cout << endl;
-    } while (answer); // повторяем ввод данных пока пользователь не захочет прекратить добавление новых связей
+    } while (true); // повторяем ввод данных пока пользователь не захочет прекратить добавление новых связей
+    MainAlgorytm->SaveFirstGraf();
     Sleep(1000);
 }
 
 void Menu::ShortestWay()
 {
-    int start, finish;
+    MainAlgorytm->Calculations();
     system("cls");
-    cout << "Type start node:";
-    cin >> start;
-    cout << endl << "Type finish node:";
-    cin >> finish;
-    MainAlgorytm->Calculations(start, finish);
+    cout << "The shortest ways for each of nodes: " << endl; // отображения все кратчайших путей в виде таблицы 
+    MainAlgorytm->Print(0);
+    MainAlgorytm->ShowFirstGraf(1);
+    cout << "\nThe value for ways of each of nodes: " << endl; // отображения расстояния между всеми узлами в виде таблицы
+    MainAlgorytm->Print(1);
+    MainAlgorytm->ShowFirstGraf(0);
 }
 
 bool Menu::ShowMenu()
 {
     short answer;
     system("cls");
+    cout << 5 / 2 << endl;
     cout << "1 - Create new graf; \n2 - Add connection; \n3 - Show all current ways matrix; \n4 - Show current value matrix; \n5 - Calculate shortest way; \n0 - exit;\n";
     cin >> answer;
     if (answer == 1)
